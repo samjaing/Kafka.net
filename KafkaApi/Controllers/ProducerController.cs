@@ -8,27 +8,37 @@ namespace KafkaApi.Controllers
     public class ProducerController : ControllerBase
     {
         private readonly ProducerConfig config = new ProducerConfig
-        { BootstrapServers = "localhost:9092" };
+        { BootstrapServers = "localhost:19392" };
         private readonly string topic = "simpletalk_topic";
 
-        //./kafka-topics.sh --create --bootstrap-server kafka-broker-1:9092 --replication-factor 1 --partitions 1 --topic simpletalk_topic
+        //./kafka-topics.sh --create --bootstrap-server kafka-broker-1:19392 --replication-factor 1 --partitions 1 --topic simpletalk_topic
+        //./kafka-topics.sh --create --bootstrap-server kafka-broker-1:19392 --replication-factor 1 --partitions 1 --topic simpletalk_topic
 
-        //./kafka-topics.sh --create --bootstrap-server kafka-broker-1:9092 --replication-factor 1 --partitions 1 --topic simpletalk_topic
-
-
+        /// <summary>
+        /// This endpoint acts as a producer for kafka
+        /// </summary>
+        /// <param name="message">Message to publish</param>
+        /// <returns></returns>
         [HttpPost]
-        public IActionResult Post([FromQuery] string message)
+        public async Task<IActionResult> Post([FromQuery] string message)
         {
-            return Created(string.Empty, SendToKafkaAsync(topic, message));
+            try
+            {
+                await SendToKafkaAsync(topic, message);
+            }
+            catch(Exception ex)
+            {
+                return StatusCode(500,ex.ToString());
+            }
+            return Ok("Message sent.");
         }
 
-        [HttpGet]
-        public IActionResult Get()
-        {
-            Console.WriteLine($"sambhav");
-            return Created(string.Empty, SendToKafkaAsync(topic, "hoha").Result);
-        }
-
+        /// <summary>
+        /// Communicates with kafka
+        /// </summary>
+        /// <param name="topic">Topic to which message has to be published</param>
+        /// <param name="message">Actual message</param>
+        /// <returns></returns>
         private async Task<object> SendToKafkaAsync(string topic, string message)
         {
             Action<DeliveryReport<Null, string>> handler = r =>
@@ -41,17 +51,16 @@ namespace KafkaApi.Controllers
             {
                 try
                 {
-                    //producer.Produce(topic, new Message<Null, string> { Value = message }, handler);
                     var dr = await producer.ProduceAsync(topic, new Message<Null, string> { Value = message });
                     Console.WriteLine($"Delivered '{dr.Value}' to '{dr.TopicPartitionOffset}'");
-                    return "success";
+                    
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine($"Oops, something went wrong: {e}");
+                    return $"Oops, something went wrong: {e}";
                 }
             }
-            return null;
+            return "success";
         }
     }
 }

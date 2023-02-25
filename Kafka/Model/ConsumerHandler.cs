@@ -10,7 +10,7 @@ namespace Kafka.Model
             var conf = new ConsumerConfig
             {
                 GroupId = "st_consumer_group",
-                BootstrapServers = "localhost:9092",
+                BootstrapServers = "localhost:19392",
                 AutoOffsetReset = AutoOffsetReset.Earliest
             };
             using (var builder = new ConsumerBuilder<Ignore,
